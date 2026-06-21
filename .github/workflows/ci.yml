@@ -1,0 +1,68 @@
+name: CI/CD Pipeline - ms-analitica
+
+on:
+  push:
+    branches: ["main", "develop", "feature/*"]
+  pull_request:
+    branches: ["main", "develop"]
+
+env:
+  # Garantiza compatibilidad con las acciones de Node en entornos recientes
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+
+    steps:
+      - name: 📥 Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: 📦 Instalar dependencias
+        run: npm ci
+
+      - name: 🔍 Ejecutar Linter
+        run: npm run lint
+
+      - name: 🧪 Ejecutar Pruebas Unitarias (Jest)
+        run: npm test -- --coverage
+        env:
+          NODE_ENV: test
+          PORT: 3007
+          DB_HOST: localhost
+          DB_PORT: 5433
+          DB_USER: test_user
+          DB_PASSWORD: test_password
+          DB_NAME: analitica_db
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          INTERNAL_SECRET_TOKEN: ${{ secrets.INTERNAL_SECRET_TOKEN || 'mock-secret-token-for-ci' }}
+          EUREKA_HOST: localhost
+          API_GATEWAY_URL: http://localhost:3000
+          RABBITMQ_URL: amqp://localhost
+          RABBITMQ_URL_LOCAL: amqp://localhost
+
+      - name: 🏗️ Compilar Proyecto (Build)
+        run: npm run build
+
+      # TODO: Descomentar cuando se configuren los secrets de Docker (DOCKER_USERNAME, DOCKER_PASSWORD)
+      # - name: 🔐 Login a Docker Hub
+      #   uses: docker/login-action@v3
+      #   with:
+      #     username: ${{ secrets.DOCKER_USERNAME }}
+      #     password: ${{ secrets.DOCKER_PASSWORD }}
+      #
+      # - name: 🐳 Build y Push de imagen Docker
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: ./ms-analitica
+      #     push: true
+      #     tags: fococero/ms-analitica:latest

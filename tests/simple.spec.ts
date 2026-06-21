@@ -1,3 +1,9 @@
+/**
+ * Pruebas de sanidad (sanity check) para ms-analitica
+ * 
+ * @module simple
+ */
+
 /// <reference types="jest" />
 import { sumar, esFechaValida } from "../src/utils/calculadora";
 
