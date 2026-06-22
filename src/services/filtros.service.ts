@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Servicio de obtención de filtros dinámicos para el dashboard.
+ * Proporciona listas de categorías, orígenes y severidades únicas,
+ * con caché Redis para evitar consultas repetitivas a la base de datos.
+ */
+
 import { analiticaRepository } from "../repositories/analitica.repository";
 import { redisCache } from "../config/redis";
 import { RedisMutex } from "../cache/redis.mutex";
@@ -31,18 +37,33 @@ class FiltrosService {
     }
   }
 
+  /**
+   * Obtiene la lista de categorías de incidentes únicas.
+   *
+   * @returns Array de nombres de categorías ordenados alfabéticamente
+   */
   public async listarCategorias(): Promise<string[]> {
     return this.obtenerFiltroGenerico("categorias", () =>
       analiticaRepository.obtenerCategoriasUnicas(),
     );
   }
 
+  /**
+   * Obtiene la lista de orígenes de incidentes únicos.
+   *
+   * @returns Array de nombres de orígenes ordenados alfabéticamente
+   */
   public async listarOrigenes(): Promise<string[]> {
     return this.obtenerFiltroGenerico("origenes", () =>
       analiticaRepository.obtenerOrigenesUnicos(),
     );
   }
 
+  /**
+   * Obtiene la lista de niveles de severidad únicos.
+   *
+   * @returns Array de niveles de severidad ordenados alfabéticamente
+   */
   public async listarSeveridades(): Promise<string[]> {
     return this.obtenerFiltroGenerico("severidades", () =>
       analiticaRepository.obtenerSeveridadesUnicas(),

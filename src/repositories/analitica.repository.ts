@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Repositorio de datos analíticos para el data warehouse.
+ * Encapsula el acceso a tablas del esquema analítico (fact_incidentes, dim_tiempo,
+ * vistas materializadas) con consultas espaciales PostGIS y filtros dinámicos.
+ */
+
 import { dbPool } from "../config/db";
 import {
   IFactIncidente,
@@ -6,6 +12,13 @@ import {
 import { TStatsQuery, THeatmapQuery } from "../validators/analitica.validator";
 
 class AnaliticaRepository {
+  /**
+   * Construye dinámicamente la cláusula WHERE para consultas analíticas.
+   *
+   * @param params - Parámetros de filtro (startDate, endDate, categorias, severidad)
+   * @param startIdx - Índice inicial para los parámetros con bind (default 1)
+   * @returns Objeto con cláusula WHERE, valores y próximo índice disponible
+   */
   private construirFiltrosBase(
     params: Partial<TStatsQuery>,
     startIdx = 1,
@@ -39,6 +52,12 @@ class AnaliticaRepository {
     return { where, values, nextIdx: idx };
   }
 
+  /**
+   * Obtiene estadísticas base de incidentes con filtros dinámicos.
+   *
+   * @param params - Parámetros de consulta y filtros
+   * @returns Lista de incidentes filtrados
+   */
   public async obtenerEstadisticasBase(
     params: TStatsQuery,
   ): Promise<IFactIncidente[]> {
@@ -54,6 +73,12 @@ class AnaliticaRepository {
     return result.rows;
   }
 
+  /**
+   * Obtiene datos geoespaciales para generar mapas de calor.
+   *
+   * @param params - Parámetros con filtros temporales y límites geográficos (bounding box)
+   * @returns Lista de incidentes con latitud, longitud, severidad y categoría
+   */
   public async obtenerDatosMapaCalor(
     params: THeatmapQuery,
   ): Promise<IFactIncidente[]> {
@@ -78,6 +103,13 @@ class AnaliticaRepository {
     return result.rows;
   }
 
+  /**
+   * Obtiene incidentes cuyo geohash comienza con el prefijo dado.
+   *
+   * @param geohash - Prefijo de geohash para filtrar
+   * @param limite - Cantidad máxima de resultados
+   * @returns Lista de incidentes en esa región
+   */
   public async obtenerIncidentesPorGeohash(
     geohash: string,
     limite: number,
@@ -93,6 +125,16 @@ class AnaliticaRepository {
     return result.rows;
   }
 
+  /**
+   * Obtiene incidentes dentro de un radio geográfico usando ST_DWithin.
+   *
+   * @param lat - Latitud del punto central
+   * @param lng - Longitud del punto central
+   * @param radioMetros - Radio de búsqueda en metros
+   * @param startDate - Fecha de inicio del rango
+   * @param endDate - Fecha de fin del rango
+   * @returns Lista de incidentes ordenados por distancia ascendente
+   */
   public async obtenerIncidentesPorRadio(
     lat: number,
     lng: number,
@@ -117,6 +159,13 @@ class AnaliticaRepository {
     return result.rows;
   }
 
+  /**
+   * Obtiene serie de tiempo diaria de total de incidentes.
+   *
+   * @param startDate - Fecha de inicio
+   * @param endDate - Fecha de fin
+   * @returns Array con fecha_sk y total_incidentes por día
+   */
   public async obtenerSerieTiempoDiaria(
     startDate: Date,
     endDate: Date,
@@ -132,6 +181,11 @@ class AnaliticaRepository {
     return result.rows;
   }
 
+  /**
+   * Obtiene nombres de categorías de incidentes únicos (para filtros).
+   *
+   * @returns Array de nombres de categorías ordenados alfabéticamente
+   */
   public async obtenerCategoriasUnicas(): Promise<string[]> {
     const result = await dbPool.query(
       "SELECT DISTINCT categoria FROM fact_incidentes WHERE categoria IS NOT NULL ORDER BY categoria ASC",
@@ -139,6 +193,11 @@ class AnaliticaRepository {
     return result.rows.map((row) => row.categoria);
   }
 
+  /**
+   * Obtiene orígenes de incidentes únicos (para filtros).
+   *
+   * @returns Array de orígenes ordenados alfabéticamente
+   */
   public async obtenerOrigenesUnicos(): Promise<string[]> {
     const result = await dbPool.query(
       "SELECT DISTINCT origen FROM fact_incidentes WHERE origen IS NOT NULL ORDER BY origen ASC",
@@ -146,6 +205,11 @@ class AnaliticaRepository {
     return result.rows.map((row) => row.origen);
   }
 
+  /**
+   * Obtiene niveles de severidad únicos (para filtros).
+   *
+   * @returns Array de severidades ordenadas alfabéticamente
+   */
   public async obtenerSeveridadesUnicas(): Promise<string[]> {
     const result = await dbPool.query(
       "SELECT DISTINCT severidad FROM fact_incidentes WHERE severidad IS NOT NULL ORDER BY severidad ASC",
@@ -153,6 +217,11 @@ class AnaliticaRepository {
     return result.rows.map((row) => row.severidad);
   }
 
+  /**
+   * Asegura que exista un registro en dim_tiempo para la fecha dada (UPSERT).
+   *
+   * @param fecha - Fecha para la que se requiere la dimensión
+   */
   public async asegurarDimensionTiempo(fecha: Date): Promise<void> {
     const query = `
             INSERT INTO dim_tiempo (fecha_sk, fecha_completa, anio, mes, dia, dia_semana, es_fin_semana)
@@ -163,6 +232,12 @@ class AnaliticaRepository {
     await dbPool.query(query, [fechaSk, fecha]);
   }
 
+  /**
+   * Inserta un incidente en fact_incidentes con geolocalización PostGIS.
+   * Usa ON CONFLICT DO NOTHING para evitar duplicados por ID.
+   *
+   * @param inc - Registro IFactIncidente a insertar
+   */
   public async ingestarIncidente(inc: IFactIncidente): Promise<void> {
     const query = `
             INSERT INTO fact_incidentes (
@@ -190,6 +265,9 @@ class AnaliticaRepository {
     ]);
   }
 
+  /**
+   * Refresca las vistas materializadas del esquema analítico.
+   */
   public async refrescarVistasMaterializadas(): Promise<void> {
     await dbPool.query(
       "REFRESH MATERIALIZED VIEW CONCURRENTLY vw_incidentes_agregados",

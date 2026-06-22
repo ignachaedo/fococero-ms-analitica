@@ -1,4 +1,9 @@
-// src/middlewares/error.middleware.ts
+/**
+ * @fileoverview Manejador global de errores para ms-analitica.
+ * Clasifica errores en operacionales (AppError), de validación (ZodError)
+ * y errores internos no controlados, retornando respuestas estandarizadas.
+ */
+
 import { Request, Response, NextFunction } from "express";
 import { ZodError, ZodIssue } from "zod";
 import { AppError } from "../helpers/error.helper";
@@ -6,6 +11,19 @@ import { Logger } from "../helpers/logger.helper";
 import { RespuestaHttpTransformer } from "../transformers/respuesta-http.transformer";
 
 export class ErrorMiddleware {
+  /**
+   * Manejador global de errores del middleware de Express.
+   *
+   * @description Procesa errores según su tipo:
+   * - AppError: retorna el código y mensaje definidos
+   * - ZodError: retorna 400 con detalles de validación
+   * - Otros: retorna 500 genérico (error interno)
+   *
+   * @param error - Error capturado
+   * @param req - Objeto Request de Express
+   * @param res - Objeto Response de Express
+   * @param next - Función NextFunction de Express
+   */
   public static handle(
     error: Error,
     req: Request,

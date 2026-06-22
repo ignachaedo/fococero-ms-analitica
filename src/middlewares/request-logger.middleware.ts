@@ -1,7 +1,18 @@
+/**
+ * @fileoverview Middleware de logging de peticiones HTTP para ms-analitica.
+ */
+
 import { Request, Response, NextFunction } from "express";
 import { Logger } from "../helpers/logger.helper";
 
 export class RequestLoggerMiddleware {
+  /**
+   * Middleware que logea cada petición HTTP con método, URL, status y duración.
+   *
+   * @param req - Objeto Request de Express
+   * @param res - Objeto Response de Express
+   * @param next - Función NextFunction de Express
+   */
   public static log(req: Request, res: Response, next: NextFunction): void {
     const start = Date.now();
 

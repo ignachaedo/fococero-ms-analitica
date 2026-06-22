@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Servicio Core de analítica: KPIs, tendencias, distribución
+ * y detección de anomalías. Implementa caché con Redis y bloqueo distribuido
+ * para prevenir lecturas concurrentes a la base de datos.
+ */
+
 import { createHash } from "crypto";
 import { analiticaRepository } from "../repositories/analitica.repository";
 import { reportesCache } from "../cache/reportes.cache";
@@ -81,24 +87,48 @@ class CoreService {
     }
   }
 
+  /**
+   * Calcula KPIs (indicadores clave de rendimiento) para el dashboard.
+   *
+   * @param params - Parámetros de consulta con rango de fechas y filtros
+   * @returns KPIs calculados (total incidentes, promedio respuesta, etc.)
+   */
   public async calcularKpis(params: TStatsQuery) {
     const key = this.generarLockId("lock:core:kpi", params);
     const datos = await this.obtenerDatosBaseSeguros(params, key);
     return EstadisticasTransformer.extraerKpis(datos);
   }
 
+  /**
+   * Calcula series de tiempo de tendencias de incidentes.
+   *
+   * @param params - Parámetros de consulta con rango de fechas
+   * @returns Array de puntos {x: fecha, y: total_incidentes}
+   */
   public async calcularTendencias(params: TStatsQuery) {
     const key = this.generarLockId("lock:core:tendencia", params);
     const datos = await this.obtenerDatosBaseSeguros(params, key);
     return EstadisticasTransformer.extraerTendencias(datos);
   }
 
+  /**
+   * Calcula la distribución de incidentes por categoría.
+   *
+   * @param params - Parámetros de consulta con rango de fechas
+   * @returns Array de {name: categoría, value: total}
+   */
   public async calcularDistribucion(params: TStatsQuery) {
     const key = this.generarLockId("lock:core:dist", params);
     const datos = await this.obtenerDatosBaseSeguros(params, key);
     return EstadisticasTransformer.extraerDistribucion(datos);
   }
 
+  /**
+   * Detecta anomalías estadísticas en las series de tiempo.
+   *
+   * @param params - Parámetros de consulta con rango de fechas
+   * @returns Lista de anomalías detectadas con nivel de criticidad
+   */
   public async detectarAnomalias(
     params: TStatsQuery,
   ): Promise<IAnomaliaDetectada[]> {
@@ -107,18 +137,37 @@ class CoreService {
     return AnomaliasDetector.analizarTendencias(datos);
   }
 
+  /**
+   * Calcula KPIs personalizados para un ciudadano.
+   *
+   * @param params - Parámetros de consulta
+   * @param _userId - ID del usuario (reservado para filtros futuros)
+   * @returns KPIs del ciudadano
+   */
   public async calcularKpisCiudadano(params: TStatsQuery, _userId: string) {
     const key = this.generarLockId("lock:core:kpi-ciudadano", params);
     const datos = await this.obtenerDatosBaseSeguros(params, key);
     return EstadisticasTransformer.extraerKpis(datos);
   }
 
+  /**
+   * Calcula KPIs tácticos para brigadistas.
+   *
+   * @param params - Parámetros de consulta
+   * @returns KPIs del brigadista
+   */
   public async calcularKpisBrigadista(params: TStatsQuery) {
     const key = this.generarLockId("lock:core:kpi-brigadista", params);
     const datos = await this.obtenerDatosBaseSeguros(params, key);
     return EstadisticasTransformer.extraerKpis(datos);
   }
 
+  /**
+   * Calcula KPIS globales del sistema para administradores.
+   *
+   * @param params - Parámetros de consulta
+   * @returns KPIs administrativos
+   */
   public async calcularKpisAdmin(params: TStatsQuery) {
     const key = this.generarLockId("lock:core:kpi-admin", params);
     const datos = await this.obtenerDatosBaseSeguros(params, key);

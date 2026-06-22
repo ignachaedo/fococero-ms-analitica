@@ -1,6 +1,13 @@
+/**
+ * @fileoverview Servicio de análisis predictivo de incidentes.
+ * Genera pronósticos de incidentes usando promedios móviles simples (SMA)
+ * con ventana de 14 días y margen de error basado en desviación estándar.
+ */
+
 import { analiticaRepository } from "../repositories/analitica.repository";
 import { TStatsQuery } from "../validators/analitica.validator";
 
+/** Punto individual del pronóstico con fechas y márgenes de error */
 interface IPuntoPronostico {
   fecha: string;
   incidentes_estimados: number;
@@ -12,6 +19,17 @@ class PredictivaService {
   private readonly DIAS_PROYECCION = 7;
   private readonly PERIODO_VENTANA_MMS = 14;
 
+  /**
+   * Genera un pronóstico de incidentes para los próximos 7 días.
+   *
+   * @description Usa promedio móvil simple (SMA) con ventana de 14 días
+   * y desviación estándar para calcular márgenes de error.
+   * Requiere al menos 14 días de datos históricos.
+   *
+   * @param params - Parámetros de consulta con rango de fechas
+   * @returns Array de puntos de pronóstico con fechas y márgenes de error
+   * @throws Error - Si hay menos de 14 días de datos históricos
+   */
   public async generarPronostico(
     params: TStatsQuery,
   ): Promise<IPuntoPronostico[]> {

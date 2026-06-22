@@ -1,6 +1,17 @@
+/**
+ * @fileoverview Servicio de alertas analíticas.
+ * Detecta y notifica anomalías críticas en las series de tiempo
+ * para activar respuestas automáticas del sistema.
+ */
+
 import { Logger } from "../helpers/logger.helper";
 
 export class AlertaService {
+  /**
+   * Notifica anomalías críticas encontradas en el análisis de datos.
+   *
+   * @param anomalias - Lista de anomalías detectadas (filtra solo las críticas)
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async notificarAnomaliaCritica(anomalias: any[]): Promise<void> {
     const criticas = anomalias.filter((a) => a.esCritica);

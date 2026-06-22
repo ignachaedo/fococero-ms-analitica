@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Transformador de datos geoespaciales a formato GeoJSON.
+ * Convierte datos de mapa de calor agregados por geohash en una
+ * FeatureCollection GeoJSON estándar para visualización en mapas.
+ */
+
 import {
   IMVMapaCalorGeohash,
   IHeatmapGeoJSON,
@@ -7,7 +13,10 @@ import { decodificarGeohash } from "./geohash.utils";
 
 export class GeoJsonTransformer {
   /**
-   * Transforma los datos agregados por geohash en una colección de Features GeoJSON.
+   * Transforma datos agregados por geohash en una FeatureCollection GeoJSON.
+   *
+   * @param datosGeohash - Array de datos con geohash, categoría e intensidad
+   * @returns FeatureCollection GeoJSON con puntos georreferenciados
    */
   public static aMapaCalor(
     datosGeohash: IMVMapaCalorGeohash[],

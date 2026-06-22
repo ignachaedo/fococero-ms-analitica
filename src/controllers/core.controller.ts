@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Controlador de consultas analíticas core.
+ * Expone endpoints para KPIs, tendencias, distribución, anomalías
+ * y estadísticas personalizadas por rol (ciudadano, brigadista, admin).
+ */
+
 import { Request, Response } from 'express';
 import { coreService } from '../services/core.service';
 import { StatsQuerySchema } from '../validators/analitica.validator';

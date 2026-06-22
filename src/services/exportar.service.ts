@@ -1,7 +1,20 @@
+/**
+ * @fileoverview Servicio de exportación de datos analíticos.
+ * Genera reportes en formato CSV y PDF (simulado) a partir de
+ * los datos de incidentes almacenados en el data warehouse.
+ */
+
 import { analiticaRepository } from "../repositories/analitica.repository";
 import { TStatsQuery } from "../validators/analitica.validator";
 
 export class ExportarService {
+  /**
+   * Genera un reporte CSV con BOM (UTF-8) de los datos de incidentes.
+   *
+   * @param params - Parámetros de consulta con rango de fechas
+   * @returns Objeto con buffer del archivo y nombre sugerido
+   * @throws Error - Si no hay datos disponibles para el rango seleccionado
+   */
   public async generarReporteCsv(
     params: TStatsQuery,
   ): Promise<{ buffer: Buffer; filename: string }> {
@@ -29,6 +42,12 @@ export class ExportarService {
     };
   }
 
+  /**
+   * Genera un reporte PDF (simulado - implementación base).
+   *
+   * @param _params - Parámetros de consulta (no utilizados actualmente)
+   * @returns Objeto con buffer del PDF simulado y nombre sugerido
+   */
   public async generarReportePdf(
     _params: TStatsQuery, 
   ): Promise<{ buffer: Buffer; filename: string }> {

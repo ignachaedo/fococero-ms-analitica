@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Middleware de rate limiting para ms-analitica.
+ * Limita a 30 peticiones por minuto por IP usando Redis como almacén.
+ */
+
 import { Request, Response, NextFunction } from "express";
 import { redisCache } from "../config/redis";
 import { AppError } from "../helpers/error.helper";
@@ -6,6 +11,14 @@ export class RateLimitMiddleware {
   private static readonly WINDOW_SECS = 60;
   private static readonly MAX_REQUESTS = 30;
 
+  /**
+   * Middleware que limita las peticiones a 30 por minuto por IP.
+   *
+   * @param req - Objeto Request de Express
+   * @param res - Objeto Response de Express
+   * @param next - Función NextFunction de Express
+   * @throws AppError(429) - Si se excede el límite de peticiones
+   */
   public static async limit(
     req: Request,
     res: Response,

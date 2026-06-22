@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Servicio de análisis espacial de incidentes.
+ * Genera mapas de calor GeoJSON, consulta incidentes por geohash
+ * y por radio de proximidad, con caché Redis y bloqueo distribuido.
+ */
+
 import { createHash } from "crypto";
 import { analiticaRepository } from "../repositories/analitica.repository";
 import { reportesCache } from "../cache/reportes.cache";
@@ -38,6 +44,17 @@ class EspacialService {
     return `${prefijo}:${hash}`;
   }
 
+  /**
+   * Genera un mapa de calor GeoJSON con datos agregados por geohash.
+   *
+   * @description Usa caché Redis con bloqueo distribuido (mutex) para evitar
+   * consultas concurrentes a la base de datos. Los datos se transforman
+   * a formato GeoJSON FeatureCollection.
+   *
+   * @param params - Parámetros de consulta con filtros y límites geográficos
+   * @returns GeoJSON FeatureCollection con puntos de calor
+   * @throws Error - Si falla la sincronización de caché
+   */
   public async generarMapaCalor(params: THeatmapQuery) {
     const cacheKey = this.generarLockId("lock:espacial:heatmap", params);
 
@@ -87,6 +104,12 @@ class EspacialService {
     }
   }
 
+  /**
+   * Obtiene el detalle de incidentes para un geohash específico.
+   *
+   * @param params - Parámetros con geohash y límite de resultados
+   * @returns Lista de incidentes en ese geohash
+   */
   public async obtenerDetallePorGeohash(params: TGeoHashQuery) {
     return analiticaRepository.obtenerIncidentesPorGeohash(
       params.geohash,
@@ -94,6 +117,13 @@ class EspacialService {
     );
   }
 
+  /**
+   * Obtiene incidentes dentro de un radio alrededor de un punto geográfico.
+   *
+   * @param params - Parámetros con latitud, longitud, radio y rango de fechas
+   * @returns Lista de incidentes ordenados por distancia
+   * @throws Error - Si el área está en procesamiento por otro request
+   */
   public async obtenerIncidentesPorRadio(params: TRadioQuery) {
     const cacheKey = this.generarLockId("lock:espacial:radio", params);
 

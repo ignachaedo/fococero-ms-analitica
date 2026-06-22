@@ -1,7 +1,14 @@
+/**
+ * @fileoverview Servicio de health check para ms-analitica.
+ * Verifica el estado de las dependencias críticas: PostgreSQL, Redis y RabbitMQ,
+ * y retorna un estado agregado del microservicio.
+ */
+
 import { dbPool } from "../config/db";
 import { redisCache } from "../config/redis";
 import { rabbitMQBus } from "../config/rabbitmq";
 
+/** Estado de salud del microservicio */
 export interface IHealthStatus {
   status: "OK" | "DEGRADED" | "DOWN";
   timestamp: string;
@@ -13,6 +20,15 @@ export interface IHealthStatus {
 }
 
 class HealthService {
+  /**
+   * Verifica el estado de todas las dependencias del microservicio.
+   *
+   * @description Evalúa PostgreSQL (query SELECT 1), Redis (conexión abierta)
+   * y RabbitMQ (canal disponible). Retorna OK si todas están UP,
+   * DEGRADED si alguna falla, DOWN si todas fallan.
+   *
+   * @returns Estado de salud con detalle por servicio
+   */
   public async check(): Promise<IHealthStatus> {
     let dbStatus: "UP" | "DOWN";
     let redisStatus: "UP" | "DOWN";
@@ -55,6 +71,11 @@ class HealthService {
     };
   }
 
+  /**
+   * Genera métricas de uso de memoria del proceso en formato Prometheus.
+   *
+   * @returns Métricas de memory RSS, heap total y heap usado
+   */
   public async getMetrics(): Promise<string> {
     const memoryUsage = process.memoryUsage();
     return (
